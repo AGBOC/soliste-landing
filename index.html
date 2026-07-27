@@ -65,7 +65,7 @@
     .wordmark {
       font-weight: 400;
       font-size: clamp(2.6rem, 11vw, 4.6rem);
-      letter-spacing: .3em; text-indent: .3em;
+      letter-spacing: .24em; margin-right: -.24em;
       line-height: 1.1;
       position: relative; display: inline-block; padding-top: .95em;
       white-space: nowrap;
@@ -73,7 +73,7 @@
     .wordmark .i-fer { position: relative; display: inline-block; }
     .wordmark .solo { color: var(--gilt); }
     .wordmark .i-fer svg {
-      position: absolute; left: calc(50% - .15em); transform: translateX(-50%);
+      position: absolute; left: calc(50% - .12em); transform: translateX(-50%);
       top: -1.02em; width: 1.6em; height: .7em; overflow: visible;
     }
     .wordmark .i-fer .stroke { fill: none; stroke: var(--gilt); stroke-width: 3.2; stroke-linecap: round; }
@@ -124,6 +124,14 @@
     }
     .seat:hover { border-color: var(--gilt); color: var(--ivory); }
 
+    .seat-mail {
+      margin-top: 16px;
+      font-family: var(--label);
+      font-size: .66rem; letter-spacing: .18em;
+      color: var(--ivory-dim);
+    }
+    .copied { color: var(--gilt); }
+
     footer {
       margin-top: 72px;
       font-family: var(--label);
@@ -149,11 +157,37 @@
     <p class="movement">The first movement — numbered flacons,<br />offered to The Circle before the doors open.</p>
 
     <a class="seat" href="mailto:circle@solisteparfums.com?subject=Requesting%20a%20seat">Request a Seat</a>
+    <p class="seat-mail" id="seatMail">circle@solisteparfums.com</p>
   </main>
 
   <footer>
     <div>Press &amp; enquiries — <a href="mailto:press@solisteparfums.com">press@solisteparfums.com</a></div>
     <div>© 2026 Soliste Parfums</div>
   </footer>
+
+  <script>
+    // A mailto: click is a dead end for visitors with no mail app configured,
+    // so every mailto also copies the address and says so on the page.
+    document.querySelectorAll('a[href^="mailto:"]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        var addr = link.getAttribute('href').slice(7).split('?')[0];
+        if (!navigator.clipboard) return;
+        navigator.clipboard.writeText(addr).then(function () {
+          if (link.classList.contains('seat')) {
+            document.getElementById('seatMail').innerHTML =
+              addr + ' <span class="copied">&mdash; copied</span>';
+          } else {
+            var tag = link.nextElementSibling;
+            if (!tag || !tag.classList.contains('copied')) {
+              tag = document.createElement('span');
+              tag.className = 'copied';
+              link.after(tag);
+            }
+            tag.textContent = ' — copied';
+          }
+        }).catch(function () {});
+      });
+    });
+  </script>
 </body>
 </html>
