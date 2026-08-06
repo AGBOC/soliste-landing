@@ -41,6 +41,10 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :focus-visible { outline: 2px solid var(--gilt); outline-offset: 3px; }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+    }
     html { background: var(--obsidian); }
     body {
       min-height: 100svh;
@@ -132,6 +136,57 @@
     }
     .copied { color: var(--gilt); }
 
+    /* ── Be told when the house opens ── */
+    .tell { margin-top: 52px; }
+    .tell-title {
+      font-family: var(--label);
+      font-size: .7rem; letter-spacing: .3em; text-indent: .3em;
+      text-transform: uppercase; color: var(--ivory);
+    }
+    .tell-sub {
+      margin-top: 14px;
+      font-size: .95rem; font-style: italic; color: var(--ivory-dim);
+      line-height: 1.6; text-wrap: balance;
+    }
+    .tell-form {
+      margin-top: 26px;
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    }
+    .tell-input {
+      flex: 1 1 260px; max-width: 320px;
+      background: transparent; color: var(--ivory);
+      border: 1px solid var(--hairline);
+      padding: 14px 16px;
+      font-family: var(--label); font-size: .78rem; letter-spacing: .08em;
+    }
+    .tell-input::placeholder { color: var(--ivory-dim); opacity: .8; }
+    .tell-input:focus { border-color: var(--gilt); outline: none; }
+    .tell-btn {
+      font-family: var(--label);
+      font-size: .7rem; letter-spacing: .3em; text-indent: .3em;
+      text-transform: uppercase;
+      color: var(--gilt); background: transparent;
+      border: 1px solid var(--hairline);
+      padding: 14px 26px; cursor: pointer;
+      transition: border-color .25s ease, color .25s ease;
+    }
+    .tell-btn:hover:not(:disabled) { border-color: var(--gilt); color: var(--ivory); }
+    .tell-btn:disabled { opacity: .6; cursor: default; }
+    /* Turnstile is interaction-only, so it occupies no space unless a challenge is shown */
+    .tell-form .cf-turnstile { flex-basis: 100%; display: flex; justify-content: center; }
+    .tell-note {
+      margin-top: 14px; min-height: 1.2em;
+      font-family: var(--label);
+      font-size: .64rem; letter-spacing: .14em;
+      color: var(--ivory-dim);
+    }
+    .tell-note.ok { color: var(--gilt); }
+    .tell-or {
+      margin-top: 44px;
+      font-family: var(--label);
+      font-size: .64rem; letter-spacing: .18em; color: var(--ivory-dim);
+    }
+
     footer {
       margin-top: 72px;
       font-family: var(--label);
@@ -156,6 +211,24 @@
     <p class="opens">The house opens October 1, 2026</p>
     <p class="movement">The first movement — numbered flacons,<br />offered to The Circle before the doors open.</p>
 
+    <section class="tell" aria-labelledby="tellTitle">
+      <h2 class="tell-title" id="tellTitle">Be told when the house opens</h2>
+      <p class="tell-sub">One letter now and then — the programme notes.<br />Nothing else, and you can leave in one click.</p>
+
+      <form class="tell-form" id="tellForm" novalidate>
+        <label class="visually-hidden" for="tellEmail">Email address</label>
+        <input class="tell-input" id="tellEmail" type="email" name="email"
+               placeholder="Your email address" autocomplete="email" required />
+        <!-- interaction-only: the widget stays invisible unless a real challenge is
+             needed, while still populating the cf-turnstile-response token the backend
+             verifies. Same sitekey as the storefront (publishable by design). -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADxhGZj9u4QNVROX" data-theme="dark" data-appearance="interaction-only"></div>
+        <button class="tell-btn" id="tellBtn" type="submit">Subscribe</button>
+      </form>
+      <p class="tell-note" id="tellNote" role="status" aria-live="polite"></p>
+    </section>
+
+    <p class="tell-or">Or ask for a seat in The Circle</p>
     <a class="seat" href="mailto:circle@solisteparfums.com?subject=Requesting%20a%20seat">Request a Seat</a>
     <p class="seat-mail" id="seatMail">circle@solisteparfums.com</p>
   </main>
@@ -165,7 +238,71 @@
     <div>© 2026 Soliste Parfums</div>
   </footer>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script>
+    // Subscribe — posts to the backend's newsletter door, the same one the storefront
+    // uses, so there is one list and one signed unsubscribe scheme. The backend is on
+    // its own Railway host (deliberately outside the Cloudflare Access lock that still
+    // covers this zone's app), and its CORS allowlist already names this origin.
+    (function () {
+      var API  = 'https://oc-production-8678.up.railway.app/api/newsletter/subscribe';
+      var form = document.getElementById('tellForm');
+      var input = document.getElementById('tellEmail');
+      var btn  = document.getElementById('tellBtn');
+      var note = document.getElementById('tellNote');
+      if (!form) return;
+
+      function say(msg, ok) {
+        note.textContent = msg;
+        note.className = 'tell-note' + (ok ? ' ok' : '');
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = (input.value || '').trim();
+        // Deliberately permissive: the backend validates properly, and a rejection
+        // there is a clearer answer than a guess made here.
+        if (!email || email.indexOf('@') < 1) { say('Please enter an email address.'); input.focus(); return; }
+
+        var tokenEl = form.querySelector('[name="cf-turnstile-response"]');
+        var token = tokenEl ? tokenEl.value : '';
+
+        btn.disabled = true;
+        btn.textContent = 'Subscribing…';
+        say('');
+
+        fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, turnstileToken: token })
+        }).then(function (res) {
+          if (res.ok) {
+            form.style.display = 'none';
+            say('You are on the list. We will write when there is something to say.', true);
+            return;
+          }
+          if (res.status === 409) {
+            form.style.display = 'none';
+            say('You are already on the list.', true);
+            return;
+          }
+          if (res.status === 429) { say('Too many attempts just now — please try again later.'); }
+          else if (res.status === 400) { say('That did not go through. Check the address and try again.'); }
+          else { say('Something went wrong. Please try again, or write to circle@solisteparfums.com.'); }
+          btn.disabled = false;
+          btn.textContent = 'Subscribe';
+          // A used Turnstile token cannot be replayed, so the widget must be reset or
+          // the next attempt fails verification even with a correct address.
+          if (window.turnstile) { try { window.turnstile.reset(); } catch (err) {} }
+        }).catch(function () {
+          say('Could not reach us. Please try again, or write to circle@solisteparfums.com.');
+          btn.disabled = false;
+          btn.textContent = 'Subscribe';
+          if (window.turnstile) { try { window.turnstile.reset(); } catch (err) {} }
+        });
+      });
+    }());
+
     // A mailto: click is a dead end for visitors with no mail app configured,
     // so every mailto also copies the address and says so on the page.
     document.querySelectorAll('a[href^="mailto:"]').forEach(function (link) {
