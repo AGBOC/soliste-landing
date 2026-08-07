@@ -127,6 +127,60 @@
       transition: border-color .25s ease, color .25s ease;
     }
     .seat:hover { border-color: var(--gilt); color: var(--ivory); }
+    /* It became a <button> so it can open the dialog; keep it looking identical. */
+    .seat { background: transparent; cursor: pointer; }
+
+    /* ── Request a Seat dialog ───────────────────────────────────────────── */
+    .seat-overlay {
+      position: fixed; inset: 0; z-index: 60;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      background: rgba(10, 9, 8, .82);
+      -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    }
+    .seat-overlay[hidden] { display: none; }
+    .seat-modal {
+      position: relative;
+      width: 100%; max-width: 460px;
+      max-height: calc(100vh - 48px); overflow-y: auto;
+      background: var(--obsidian);
+      border: 1px solid var(--hairline);
+      padding: 40px 32px 32px;
+      text-align: center;
+    }
+    .seat-close {
+      position: absolute; top: 8px; right: 12px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--ivory-dim); font-size: 1.6rem; line-height: 1;
+      /* 24x24 minimum target (WCAG 2.2 §2.5.8) without moving the glyph. */
+      min-width: 32px; min-height: 32px;
+    }
+    .seat-close:hover { color: var(--gilt); }
+    .seat-modal-title {
+      font-family: var(--serif); font-weight: 400;
+      font-size: 1.5rem; letter-spacing: .02em; margin: 0 0 10px;
+      color: var(--ivory);
+    }
+    .seat-modal-sub {
+      font-family: var(--label); font-size: .78rem; line-height: 1.75;
+      color: var(--ivory-dim); margin: 0 0 24px;
+    }
+    .seat-form { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+    .seat-row { display: flex; gap: 12px; }
+    .seat-field { flex: 1 1 0; min-width: 0; }
+    /* The shared .tell-input is sized for a single inline field (flex: 1 1 260px;
+       max-width: 320px); in the dialog every field is full width and stacked.
+       Scoped under .seat-form deliberately: .tell-input is declared LOWER in this
+       stylesheet, so at equal specificity it wins and the email field flex-grew to
+       fill the whole column — a 260px-tall input box. Two classes beat one regardless
+       of order, which is what this needs to survive later edits. */
+    .seat-form .seat-input { flex: 0 0 auto; max-width: none; width: 100%; box-sizing: border-box; }
+    .seat-form .seat-submit { width: 100%; margin-top: 4px; }
+    #seatTurnstile:empty { display: none; }
+    @media (max-width: 420px) {
+      .seat-row { flex-direction: column; }
+      .seat-modal { padding: 36px 20px 26px; }
+    }
 
     .seat-mail {
       margin-top: 16px;
@@ -135,6 +189,11 @@
       color: var(--ivory-dim);
     }
     .copied { color: var(--gilt); }
+    /* This address was plain text until Request a Seat became a dialog; making it a real
+       mailto link left it rendering in the browser's default blue/purple, which is the
+       one colour nowhere else on this page. Matches the footer's treatment. */
+    .seat-mail a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--hairline); }
+    .seat-mail a:hover { color: var(--ivory); }
 
     /* ── Be told when the house opens ── */
     .tell { margin-top: 52px; }
@@ -229,9 +288,46 @@
     </section>
 
     <p class="tell-or">Or ask for a seat in The Circle</p>
-    <a class="seat" href="mailto:circle@solisteparfums.com?subject=Requesting%20a%20seat">Request a Seat</a>
-    <p class="seat-mail" id="seatMail">circle@solisteparfums.com</p>
+    <!-- Was a mailto: link, which asked a visitor to open a mail client and compose a
+         message before the house knew anything about them. Most people do not. It now
+         opens a short form and captures the request directly; the address stays below
+         for anyone who would rather write. -->
+    <button class="seat" id="seatBtn" type="button">Request a Seat</button>
+    <p class="seat-mail" id="seatMail">or write to <a href="mailto:circle@solisteparfums.com?subject=Requesting%20a%20seat">circle@solisteparfums.com</a></p>
   </main>
+
+  <!-- Request a seat — name and email, nothing more. -->
+  <div class="seat-overlay" id="seatOverlay" hidden>
+    <div class="seat-modal" role="dialog" aria-modal="true" aria-labelledby="seatModalTitle" id="seatModal">
+      <button class="seat-close" id="seatClose" type="button" aria-label="Close">&times;</button>
+      <h2 class="seat-modal-title" id="seatModalTitle">Request a Seat</h2>
+      <p class="seat-modal-sub">The Circle is seated by invitation. Leave your name and we will write when a seat opens.</p>
+
+      <form class="seat-form" id="seatForm" novalidate>
+        <div class="seat-row">
+          <div class="seat-field">
+            <label class="visually-hidden" for="seatFirst">First name</label>
+            <input class="tell-input seat-input" id="seatFirst" name="firstName" type="text"
+                   placeholder="First name" autocomplete="given-name" maxlength="100" required />
+          </div>
+          <div class="seat-field">
+            <label class="visually-hidden" for="seatLast">Last name</label>
+            <input class="tell-input seat-input" id="seatLast" name="lastName" type="text"
+                   placeholder="Last name" autocomplete="family-name" maxlength="100" required />
+          </div>
+        </div>
+        <label class="visually-hidden" for="seatEmail">Email address</label>
+        <input class="tell-input seat-input" id="seatEmail" name="email" type="email"
+               placeholder="Your email address" autocomplete="email" maxlength="254" required />
+        <!-- Rendered explicitly when the dialog opens, not by the implicit class scan:
+             a widget sitting in a hidden container at page load may never execute, and
+             the backend refuses a request with no token. -->
+        <div id="seatTurnstile"></div>
+        <button class="tell-btn seat-submit" id="seatSubmit" type="submit">Request a Seat</button>
+      </form>
+      <p class="tell-note" id="seatNote" role="status" aria-live="polite"></p>
+    </div>
+  </div>
 
   <footer>
     <div>Press &amp; enquiries — <a href="mailto:press@solisteparfums.com">press@solisteparfums.com</a></div>
@@ -277,7 +373,12 @@
         function finish() {
           btn.disabled = false;
           btn.textContent = 'Subscribe';
-          if (window.turnstile) { try { window.turnstile.reset(); } catch (err) {} }
+          // Reset THIS form's widget by container. A bare reset() is ambiguous once a
+          // second widget exists on the page (the Request a Seat dialog has its own),
+          // and clearing the wrong one leaves the other holding a spent token.
+          if (window.turnstile) {
+            try { window.turnstile.reset(form.querySelector('.cf-turnstile')); } catch (err) {}
+          }
         }
 
         fetch(API, {
@@ -322,6 +423,151 @@
       });
     }());
 
+    // Request a Seat — the same newsletter door, with a name attached. One list, one
+    // signed unsubscribe scheme; the backend treats the names as optional so the plain
+    // Subscribe field above keeps working unchanged.
+    (function () {
+      var API      = 'https://oc-production-8678.up.railway.app/api/newsletter/subscribe';
+      var openBtn  = document.getElementById('seatBtn');
+      var overlay  = document.getElementById('seatOverlay');
+      var modal    = document.getElementById('seatModal');
+      var closeBtn = document.getElementById('seatClose');
+      var form     = document.getElementById('seatForm');
+      var first    = document.getElementById('seatFirst');
+      var last     = document.getElementById('seatLast');
+      var email    = document.getElementById('seatEmail');
+      var submit   = document.getElementById('seatSubmit');
+      var note     = document.getElementById('seatNote');
+      if (!openBtn || !overlay || !form) return;
+
+      var widgetId = null;
+      var lastFocus = null;
+
+      function say(msg, ok) {
+        note.textContent = msg;
+        note.className = 'tell-note' + (ok ? ' ok' : '');
+      }
+
+      // Explicit render, not the implicit class scan. A widget inside a hidden container
+      // at page load may never execute, and the backend refuses a request with no token
+      // (fail-closed since 2026-08-07) — so an invisible widget would mean nobody could
+      // ever request a seat.
+      function ensureWidget() {
+        if (widgetId !== null || !window.turnstile) return;
+        try {
+          widgetId = window.turnstile.render('#seatTurnstile', {
+            sitekey: '0x4AAAAAADxhGZj9u4QNVROX',
+            theme: 'dark',
+            appearance: 'interaction-only'
+          });
+        } catch (err) { widgetId = null; }
+      }
+
+      function open() {
+        lastFocus = document.activeElement;
+        overlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        ensureWidget();
+        first.focus();
+      }
+
+      function close() {
+        overlay.hidden = true;
+        document.body.style.overflow = '';
+        // Return focus to whatever opened the dialog, falling back to the button. Without
+        // the fallback, focus can land on <body> — which for a keyboard or screen-reader
+        // user means the next Tab starts from the top of the page, with no announcement
+        // of where they now are.
+        var target = (lastFocus && lastFocus.focus && lastFocus !== document.body) ? lastFocus : openBtn;
+        try { target.focus(); } catch (err) {}
+      }
+
+      openBtn.addEventListener('click', open);
+      closeBtn.addEventListener('click', close);
+      // Backdrop click closes; a click inside the panel must not.
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !overlay.hidden) close();
+      });
+
+      // Keep the tab ring inside the dialog while it is open — without this, tabbing
+      // walks onto the page behind it, which for a screen-reader user reads as the
+      // dialog having silently closed.
+      modal.addEventListener('keydown', function (e) {
+        if (e.key !== 'Tab') return;
+        var f = modal.querySelectorAll('button, input, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (!f.length) return;
+        var firstEl = f[0], lastEl = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+        else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var fn = (first.value || '').trim();
+        var ln = (last.value || '').trim();
+        var em = (email.value || '').trim();
+        if (!fn) { say('Please enter your first name.'); first.focus(); return; }
+        if (!ln) { say('Please enter your last name.'); last.focus(); return; }
+        // Deliberately permissive, like the subscribe field: the backend validates
+        // properly and its rejection is a clearer answer than a guess made here.
+        if (!em || em.indexOf('@') < 1) { say('Please enter an email address.'); email.focus(); return; }
+
+        var tokenEl = form.querySelector('[name="cf-turnstile-response"]');
+        var token = tokenEl ? tokenEl.value : '';
+
+        submit.disabled = true;
+        submit.textContent = 'Sending…';
+        say('');
+
+        function finish() {
+          submit.disabled = false;
+          submit.textContent = 'Request a Seat';
+          // Reset by widget id — a spent token cannot be replayed, so without this a
+          // second attempt fails even once the first problem is fixed.
+          if (window.turnstile && widgetId !== null) {
+            try { window.turnstile.reset(widgetId); } catch (err) {}
+          }
+        }
+
+        fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName: fn, lastName: ln, email: em, turnstileToken: token })
+        }).then(function (res) {
+          if (res.ok) {
+            form.style.display = 'none';
+            say('Thank you — your request is with the house. We will write when a seat opens.', true);
+            return;
+          }
+          if (res.status === 409) {
+            form.style.display = 'none';
+            say('You are already on the list — we have your request.', true);
+            return;
+          }
+          if (res.status === 429) { say('Too many attempts just now — please try again later.'); return finish(); }
+          res.json().then(function (d) {
+            var reason = (d && d.message) || '';
+            if (/challenge|verification/i.test(reason)) {
+              say('We could not complete the security check. Please refresh and try once more, or write to circle@solisteparfums.com.');
+            } else if (res.status === 400) {
+              say(reason || 'That did not look right — please check and try again.');
+            } else {
+              say('Something went wrong. Please try again, or write to circle@solisteparfums.com.');
+            }
+            finish();
+          }).catch(function () {
+            say('Something went wrong. Please try again, or write to circle@solisteparfums.com.');
+            finish();
+          });
+          return;
+        }).catch(function () {
+          say('Could not reach us. Please try again, or write to circle@solisteparfums.com.');
+          finish();
+        });
+      });
+    }());
+
     // A mailto: click is a dead end for visitors with no mail app configured,
     // so every mailto also copies the address and says so on the page.
     document.querySelectorAll('a[href^="mailto:"]').forEach(function (link) {
@@ -329,9 +575,13 @@
         var addr = link.getAttribute('href').slice(7).split('?')[0];
         if (!navigator.clipboard) return;
         navigator.clipboard.writeText(addr).then(function () {
-          if (link.classList.contains('seat')) {
+          // This branch used to test link.classList.contains('seat'), which stopped
+          // matching when Request a Seat became a <button> that opens the dialog. The
+          // address now lives in a link INSIDE #seatMail, so test for that instead —
+          // otherwise the copied note silently stopped appearing there.
+          if (link.closest('#seatMail')) {
             document.getElementById('seatMail').innerHTML =
-              addr + ' <span class="copied">&mdash; copied</span>';
+              'or write to ' + addr + ' <span class="copied">&mdash; copied</span>';
           } else {
             var tag = link.nextElementSibling;
             if (!tag || !tag.classList.contains('copied')) {
