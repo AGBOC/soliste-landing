@@ -271,6 +271,15 @@
         btn.textContent = 'Subscribing…';
         say('');
 
+        // Restore the button and reset the widget — a spent Turnstile token cannot be
+        // replayed, so without the reset a second attempt fails even when the first
+        // problem is fixed.
+        function finish() {
+          btn.disabled = false;
+          btn.textContent = 'Subscribe';
+          if (window.turnstile) { try { window.turnstile.reset(); } catch (err) {} }
+        }
+
         fetch(API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -286,19 +295,29 @@
             say('You are already on the list.', true);
             return;
           }
-          if (res.status === 429) { say('Too many attempts just now — please try again later.'); }
-          else if (res.status === 400) { say('That did not go through. Check the address and try again.'); }
-          else { say('Something went wrong. Please try again, or write to circle@solisteparfums.com.'); }
-          btn.disabled = false;
-          btn.textContent = 'Subscribe';
-          // A used Turnstile token cannot be replayed, so the widget must be reset or
-          // the next attempt fails verification even with a correct address.
-          if (window.turnstile) { try { window.turnstile.reset(); } catch (err) {} }
+          if (res.status === 429) { say('Too many attempts just now — please try again later.'); return finish(); }
+          // A 400 is either a bad address or a failed bot check, and those need
+          // different words. Blaming the address when the address was fine sends the
+          // visitor in circles — and hides a real fault from us, because everyone
+          // reports "it says my email is wrong". Read the server's reason.
+          res.json().then(function (d) {
+            var reason = (d && d.message) || '';
+            if (/challenge|verification/i.test(reason)) {
+              say('We could not complete the security check. Please refresh and try once more, or write to circle@solisteparfums.com.');
+            } else if (res.status === 400) {
+              say(reason || 'That address did not look right — please check it and try again.');
+            } else {
+              say('Something went wrong. Please try again, or write to circle@solisteparfums.com.');
+            }
+            finish();
+          }).catch(function () {
+            say('Something went wrong. Please try again, or write to circle@solisteparfums.com.');
+            finish();
+          });
+          return;
         }).catch(function () {
           say('Could not reach us. Please try again, or write to circle@solisteparfums.com.');
-          btn.disabled = false;
-          btn.textContent = 'Subscribe';
-          if (window.turnstile) { try { window.turnstile.reset(); } catch (err) {} }
+          finish();
         });
       });
     }());
