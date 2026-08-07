@@ -303,7 +303,16 @@
           res.json().then(function (d) {
             var reason = (d && d.message) || '';
             if (/challenge|verification/i.test(reason)) {
-              say('We could not complete the security check. Please refresh and try once more, or write to circle@solisteparfums.com.');
+              // TEMPORARY DIAGNOSTIC (2026-08-06). "Challenge failed" has two very
+              // different causes and the same message: either the widget never produced
+              // a token (it is not running — hostname or mode), or it produced one and
+              // the server rejected it (the secret belongs to a different widget).
+              // Saying which turns a blind retry into an answer. Remove once subscribing
+              // is confirmed working.
+              var hadToken = !!(form.querySelector('[name="cf-turnstile-response"]') || {}).value;
+              say(hadToken
+                ? 'Security check ran but was rejected [B]. Please write to circle@solisteparfums.com.'
+                : 'Security check did not run [A]. Please refresh and try once more, or write to circle@solisteparfums.com.');
             } else if (res.status === 400) {
               say(reason || 'That address did not look right — please check it and try again.');
             } else {
