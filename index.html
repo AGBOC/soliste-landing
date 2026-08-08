@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soliste Parfums — The House Opens October 1, 2026</title>
-  <meta name="description" content="Soliste Parfums is an independent fragrance house. The perfume is the orchestra. The soloist is you. The house opens October 1, 2026 — the first movement is a run of numbered flacons, offered to The Circle." />
+  <meta name="description" content="Soliste Parfums is an independent fragrance house composed by Amarri Geneva Blair. Three unisex eaux de parfum — Black Currency, Smoked Vanille and Fumoir — hand-poured in numbered small batches. The house opens October 1, 2026." />
   <link rel="canonical" href="https://solisteparfums.com/" />
 
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://solisteparfums.com/" />
   <meta property="og:title" content="Soliste Parfums — The House Opens October 1, 2026" />
-  <meta property="og:description" content="The perfume is the orchestra. The soloist is you. Numbered flacons open the house." />
+  <meta property="og:description" content="Three unisex eaux de parfum — Black Currency, Smoked Vanille and Fumoir — composed by Amarri Geneva Blair. The house opens October 1, 2026." />
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23141210'/%3E%3Cpath d='M 22 62 A 30 30 0 0 1 78 62' fill='none' stroke='%23c9a24b' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='56' r='7' fill='%23c9a24b'/%3E%3C/svg%3E" />
 
@@ -21,6 +21,8 @@
     "name": "Soliste Parfums",
     "url": "https://solisteparfums.com",
     "email": "press@solisteparfums.com",
+    "foundingDate": "2026",
+    "founder": { "@type": "Person", "name": "Amarri Geneva Blair" },
     "description": "Independent fragrance house. Eau de parfum composed and hand-poured in numbered small batches."
   }
   </script>
@@ -246,6 +248,58 @@
       font-size: .64rem; letter-spacing: .18em; color: var(--ivory-dim);
     }
 
+    /* ── The collection ───────────────────────────────────────────────────────
+       Added 2026-08-08. This page previously named no fragrance, no perfumer and
+       no size, which meant a Fragrantica / Basenotes / Parfumo moderator opening
+       solisteparfums.com could not verify the house sells anything — and all
+       three require a verifiable official website before they will create an
+       entry. The store that proves it sits behind Cloudflare Access until the day
+       before launch, so this page has to carry the proof instead.
+       Text only, on purpose: no product photography exists yet, and Google
+       Merchant rules (and plain honesty) forbid passing mockups off as the
+       product. No prices anywhere — the house does not argue the number.
+       ───────────────────────────────────────────────────────────────────────── */
+    .coll { margin-top: 58px; }
+    .coll-title {
+      font-family: var(--label);
+      font-size: .7rem; letter-spacing: .3em; text-indent: .3em;
+      text-transform: uppercase; color: var(--ivory);
+    }
+    .coll-sub {
+      margin-top: 14px;
+      font-size: .95rem; font-style: italic; color: var(--ivory-dim);
+      line-height: 1.6; text-wrap: balance;
+    }
+    .coll-list { margin-top: 36px; display: flex; flex-direction: column; gap: 28px; }
+    .coll-item { padding-top: 26px; border-top: 1px solid var(--hairline); }
+    .coll-item:first-child { padding-top: 0; border-top: 0; }
+    .coll-num {
+      font-family: var(--label);
+      font-size: .6rem; letter-spacing: .34em; text-indent: .34em;
+      text-transform: uppercase; color: var(--gilt);
+    }
+    .coll-name {
+      font-family: var(--serif); font-weight: 400;
+      font-size: clamp(1.35rem, 4.6vw, 1.7rem); line-height: 1.25;
+      margin-top: 9px; letter-spacing: .01em;
+    }
+    .coll-line {
+      margin-top: 9px;
+      font-style: italic; font-size: .98rem; color: var(--ivory-dim); line-height: 1.6;
+    }
+    .coll-meta {
+      margin-top: 13px;
+      font-family: var(--label);
+      font-size: .62rem; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--ivory-dim); line-height: 1.9;
+    }
+    .coll-foot {
+      margin-top: 36px;
+      font-family: var(--label);
+      font-size: .64rem; letter-spacing: .14em;
+      color: var(--ivory-dim); line-height: 2;
+    }
+
     footer {
       margin-top: 72px;
       font-family: var(--label);
@@ -269,6 +323,44 @@
 
     <p class="opens">The house opens October 1, 2026</p>
     <p class="movement">The first movement — numbered flacons,<br />offered to The Circle before the doors open.</p>
+
+    <!-- ⚠️ NOTE PYRAMIDS ARE DELIBERATELY NOT PUBLISHED YET.
+         The owner is assembling the definitive list. Publishing provisional notes
+         would be worse than publishing none: Fragrantica, Basenotes and Parfumo
+         transcribe whatever the official site says, and their entries are hard to
+         correct once an admin has created them — the same reason the perfumer
+         credit was made consistent before any submission went out.
+         WHEN THE LIST ARRIVES: drop a <p class="coll-notes"> under each .coll-line
+         (Top / Heart / Base), then submit to the three databases. Not before. -->
+    <section class="coll" aria-labelledby="collTitle">
+      <h2 class="coll-title" id="collTitle">The First Chair</h2>
+      <p class="coll-sub">Three compositions, and the Discovery Set that holds all three.<br />Composed and hand-poured in numbered small batches.</p>
+
+      <div class="coll-list">
+        <article class="coll-item">
+          <p class="coll-num">N°01 · The Signature</p>
+          <h3 class="coll-name">Black Currency</h3>
+          <p class="coll-line">Dark resin, quiet power.</p>
+          <p class="coll-meta">Eau de Parfum · Unisex<br />15ml · 30ml · 50ml · 100ml</p>
+        </article>
+
+        <article class="coll-item">
+          <p class="coll-num">N°02</p>
+          <h3 class="coll-name">Smoked Vanille</h3>
+          <p class="coll-line">Warm tobacco, luminous vanilla.</p>
+          <p class="coll-meta">Eau de Parfum · Unisex<br />15ml · 30ml · 50ml · 100ml</p>
+        </article>
+
+        <article class="coll-item">
+          <p class="coll-num">N°03</p>
+          <h3 class="coll-name">Fumoir</h3>
+          <p class="coll-line">A dim room, after the crowd has thinned.</p>
+          <p class="coll-meta">Eau de Parfum · Unisex<br />15ml · 30ml · 50ml · 100ml</p>
+        </article>
+      </div>
+
+      <p class="coll-foot">Composed by Amarri Geneva Blair, the house's founder and its only perfumer.<br />Missouri, USA · independent and founder-owned.</p>
+    </section>
 
     <section class="tell" aria-labelledby="tellTitle">
       <h2 class="tell-title" id="tellTitle">Be told when the house opens</h2>
