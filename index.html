@@ -543,11 +543,23 @@
       });
     }());
 
-    // Request a Seat — the same newsletter door, with a name attached. One list, one
-    // signed unsubscribe scheme; the backend treats the names as optional so the plain
-    // Subscribe field above keeps working unchanged.
+    // Request a Seat — its OWN door, not the newsletter one.
+    //
+    // ⚠️ This used to POST to /api/newsletter/subscribe, which meant a seat request was
+    // stored as a plain subscribe and was afterwards indistinguishable from someone
+    // typing their address into the field above. `circle_requests` stayed empty while
+    // this dialog told people "we will write when a seat opens" — a promise nothing in
+    // the system could keep, because nothing recorded who had asked.
+    //
+    // /api/circle/request records the seat request AND still creates the newsletter row
+    // and sends the welcome email, so nothing the old path did was lost.
+    //
+    // It lives on the backend rather than the storefront because the storefront
+    // (api.solisteparfums.com) sits behind Cloudflare Access: every request 302s to a
+    // login page and the CORS preflight from this origin returns 403. Reconcile with the
+    // storefront's own copy of this route once Access comes off.
     (function () {
-      var API      = 'https://oc-production-8678.up.railway.app/api/newsletter/subscribe';
+      var API      = 'https://oc-production-8678.up.railway.app/api/circle/request';
       var openBtn  = document.getElementById('seatBtn');
       var overlay  = document.getElementById('seatOverlay');
       var modal    = document.getElementById('seatModal');
@@ -660,11 +672,10 @@
             say('Thank you — your request is with the house. We will write when a seat opens.', true);
             return;
           }
-          if (res.status === 409) {
-            form.style.display = 'none';
-            say('You are already on the list — we have your request.', true);
-            return;
-          }
+          // No 409 branch: /api/circle/request answers a repeat request exactly as it
+          // answers a new one, on purpose. A distinguishable "already on the list" reply
+          // would turn this form into a membership oracle — post an address, read the
+          // response, learn whether that person has asked for a seat.
           if (res.status === 429) { say('Too many attempts just now — please try again later.'); return finish(); }
           res.json().then(function (d) {
             var reason = (d && d.message) || '';
