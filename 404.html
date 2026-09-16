@@ -4,17 +4,55 @@
   <meta charset="UTF-8" />
   <meta name="author" content="Amarri Blair" />
   <script>
-    // Every welcome and newsletter email links its unsubscribe to
+    // THE UNSUBSCRIBE SCREEN. Every welcome and newsletter letter links its unsubscribe to
     // solisteparfums.com/api/newsletter/unsubscribe. Until the store serves this domain,
-    // GitHub Pages answers that path with this 404 page, so forward it (query string and
-    // all) to the store server, which verifies the signed link and removes the address.
-    // Without this the opt-out in every sent email is a dead link, which CAN-SPAM forbids.
-    // Remove once the apex points at the store: the store answers the path itself.
+    // GitHub Pages answers that path with this 404 page — so the page shows the quiet
+    // unsubscribe screen itself and asks the store server (JSON) to remove the address.
+    // The subscriber never leaves solisteparfums.com. Without this the opt-out in every
+    // sent letter is a dead link, which CAN-SPAM forbids.
+    // ⚠️ TWIN: unsubscribePage() in the store's server.js (AGBOC/oc) — change the copy in both.
+    // Remove once the apex points at the store: the store then answers the path itself.
+    // If the store's raw Railway host ever changes, STORE below must change with it.
     (function () {
-      var p = location.pathname;
-      if (p === "/api/newsletter/unsubscribe" || p === "/api/newsletter/unsubscribe/") {
-        location.replace("https://oc-production-46d0.up.railway.app" + p + location.search);
+      var path = location.pathname;
+      if (path !== "/api/newsletter/unsubscribe" && path !== "/api/newsletter/unsubscribe/") return;
+      document.documentElement.className += " is-unsub";
+      document.title = "Unsubscribe — Soliste Parfums";
+
+      var STORE = "https://oc-production-46d0.up.railway.app/api/newsletter/unsubscribe";
+      var params = new URLSearchParams(location.search);
+      var email = params.get("email") || "";
+      var SUPPORT = ["Write to ", { mail: "support@solisteparfums.com" }, " and we will remove you ourselves."];
+
+      function show(title, parts) {
+        document.getElementById("unsubTitle").textContent = title;
+        var body = document.getElementById("unsubBody");
+        body.textContent = "";
+        parts.forEach(function (part) {
+          if (typeof part === "string") { body.appendChild(document.createTextNode(part)); return; }
+          var a = document.createElement("a");
+          a.href = "mailto:" + part.mail;
+          a.textContent = part.mail;
+          body.appendChild(a);
+        });
+        document.getElementById("unsub").className = "unsub";
       }
+      function incomplete() { show("This link is incomplete.", ["Your mail app may have shortened it. "].concat(SUPPORT)); }
+      function failed() { show("Something went wrong on our side.", SUPPORT); }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        if (!email || !params.get("token")) { incomplete(); return; }
+        fetch(STORE + location.search, { headers: { Accept: "application/json" } })
+          .then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, json: j }; });
+          })
+          .then(function (res) {
+            if (res.json && res.json.ok) show("Unsubscribed.", ["You will no longer receive letters from Soliste Parfums at " + email + "."]);
+            else if (res.status === 400) incomplete();
+            else failed();
+          })
+          .catch(failed);
+      });
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -155,9 +193,48 @@
     }
     footer a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--hairline); }
     footer a:hover { color: var(--ivory); }
+    /* ── The unsubscribe screen ─────────────────────────────────────────────
+       Replaces the landing page when a subscriber follows the unsubscribe link in a
+       letter (see the script in <head>). Twin of unsubscribePage() in the store's
+       server.js: the fermata, one line of type, one sentence, one way back. */
+    .unsub { display: none; max-width: 460px; }
+    html.is-unsub main, html.is-unsub footer { display: none; }
+    html.is-unsub .unsub { display: block; }
+    .unsub svg { width: 44px; height: 19px; overflow: visible; }
+    .unsub svg path { fill: none; stroke: var(--gilt); stroke-width: 2.4; stroke-linecap: round; }
+    .unsub svg circle { fill: var(--gilt); }
+    .unsub-eyebrow {
+      margin-top: 26px; font-family: var(--label); font-size: .66rem;
+      letter-spacing: .42em; text-indent: .42em; text-transform: uppercase; color: var(--ivory-dim);
+    }
+    .unsub-title {
+      margin-top: 34px; font-weight: 400; font-style: italic;
+      font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.25; color: var(--ivory);
+    }
+    .unsub-body {
+      margin-top: 18px; min-height: 1.8em; font-family: Georgia, 'Times New Roman', serif;
+      font-size: .95rem; line-height: 1.8; color: var(--ivory-dim);
+    }
+    .unsub-body a, .unsub-return { color: var(--gilt); text-decoration: none; border-bottom: 1px solid rgba(201, 162, 75, .45); }
+    .unsub-rule { width: 40px; height: 1px; margin: 40px auto 0; background: var(--hairline); }
+    .unsub-return {
+      display: inline-block; margin-top: 26px; padding: 6px 0 3px; font-family: var(--label);
+      font-size: .66rem; letter-spacing: .32em; text-indent: .32em; text-transform: uppercase;
+    }
+    .unsub-title, .unsub-body { transition: opacity .6s ease; }
+    .unsub.is-pending .unsub-body { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) { .unsub-title, .unsub-body { transition: none; } }
   </style>
 </head>
 <body>
+  <section class="unsub is-pending" id="unsub" aria-live="polite">
+    <svg viewBox="0 0 60 26" aria-hidden="true"><path d="M 5 24 A 26 26 0 0 1 55 24"></path><circle cx="30" cy="19" r="3.9"></circle></svg>
+    <p class="unsub-eyebrow">Soliste Parfums</p>
+    <h1 class="unsub-title" id="unsubTitle">One moment.</h1>
+    <p class="unsub-body" id="unsubBody"></p>
+    <div class="unsub-rule"></div>
+    <a class="unsub-return" href="https://solisteparfums.com/">Return to the house</a>
+  </section>
   <main>
     <p class="eyebrow">An Independent Fragrance House</p>
 
@@ -177,7 +254,7 @@
 
   <footer>
     <div>Press &amp; enquiries — <a href="mailto:press@solisteparfums.com">press@solisteparfums.com</a></div>
-    <div>© 2026 Soliste Parfums · Only Child LLC · 7827 Town Square Avenue, Suite 104-1070, O’Fallon, MO 63368, United States</div>
+    <div>© 2026 Soliste Parfums · 7827 Town Square Avenue, Suite 104-1070, O’Fallon, MO 63368, United States</div>
   </footer>
 
   <script>
