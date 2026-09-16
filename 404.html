@@ -47,7 +47,7 @@
             return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, json: j }; });
           })
           .then(function (res) {
-            if (res.json && res.json.ok) show("Unsubscribed.", ["You will no longer receive letters from Soliste Parfums at " + email + "."]);
+            if (res.json && res.json.ok) show("Unsubscribed.", ["You will no longer receive marketing letters from Soliste Parfums at " + email + ". Letters about an order you place will still reach you."]);
             else if (res.status === 400) incomplete();
             else failed();
           })
