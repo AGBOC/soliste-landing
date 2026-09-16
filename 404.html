@@ -2,6 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="author" content="Amarri Blair" />
+  <script>
+    // Every welcome and newsletter email links its unsubscribe to
+    // solisteparfums.com/api/newsletter/unsubscribe. Until the store serves this domain,
+    // GitHub Pages answers that path with this 404 page, so forward it (query string and
+    // all) to the store server, which verifies the signed link and removes the address.
+    // Without this the opt-out in every sent email is a dead link, which CAN-SPAM forbids.
+    // Remove once the apex points at the store: the store answers the path itself.
+    (function () {
+      var p = location.pathname;
+      if (p === "/api/newsletter/unsubscribe" || p === "/api/newsletter/unsubscribe/") {
+        location.replace("https://oc-production-46d0.up.railway.app" + p + location.search);
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Soliste Parfums — The House Opens October 1, 2026</title>
   <meta name="description" content="Soliste Parfums is an independent fragrance house. The perfume is the orchestra, the soloist is you. The house opens October 1, 2026 — the first movement is a run of numbered flacons, offered to The Circle." />
@@ -162,7 +177,7 @@
 
   <footer>
     <div>Press &amp; enquiries — <a href="mailto:press@solisteparfums.com">press@solisteparfums.com</a></div>
-    <div>© 2026 Soliste Parfums</div>
+    <div>© 2026 Soliste Parfums · Only Child LLC · 7827 Town Square Avenue, Suite 104-1070, O’Fallon, MO 63368, United States</div>
   </footer>
 
   <script>
