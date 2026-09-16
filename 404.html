@@ -7,7 +7,9 @@
     // THE UNSUBSCRIBE SCREEN. Every welcome and newsletter letter links its unsubscribe to
     // solisteparfums.com/api/newsletter/unsubscribe. Until the store serves this domain,
     // GitHub Pages answers that path with this 404 page — so the page shows the quiet
-    // unsubscribe screen itself and asks the store server (JSON) to remove the address.
+    // unsubscribe screen itself and asks the store server (a JSON POST) to remove the address.
+    // Only the POST removes anyone: the store never unsubscribes on a GET, because mail scanners
+    // pre-open links. A scanner that fetches this page does not run the script below.
     // The subscriber never leaves solisteparfums.com. Without this the opt-out in every
     // sent letter is a dead link, which CAN-SPAM forbids.
     // ⚠️ TWIN: unsubscribePage() in the store's server.js (AGBOC/oc) — change the copy in both.
@@ -42,7 +44,7 @@
 
       document.addEventListener("DOMContentLoaded", function () {
         if (!email || !params.get("token")) { incomplete(); return; }
-        fetch(STORE + location.search, { headers: { Accept: "application/json" } })
+        fetch(STORE + location.search, { method: "POST", headers: { Accept: "application/json" } })
           .then(function (r) {
             return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, json: j }; });
           })
